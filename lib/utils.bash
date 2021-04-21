@@ -41,8 +41,46 @@ download_release() {
   version="$1"
   filename="$2"
 
-  # TODO: Adapt the release URL convention for chezmoi
-  url="$GH_REPO/archive/v${version}.tar.gz"
+  # Detect correct release file name
+  local sys="$(uname -s)"
+  local mach="$(uname -m)"
+  case "$sys" in
+    Darwin)
+      sys=darwin
+      case "$mach" in
+        x86_64)
+          mach=amd64
+          ;;
+        arm64)
+          mach=arm64
+          ;;
+        *)
+          fail "Unsupported machine: $mach"
+          ;;
+      esac
+      ;;
+    Linux)
+      sys=linux
+      case "$mach" in
+        i386 | i686)
+          mach=i386
+          ;;
+        x86_64)
+          mach=amd64
+          ;;
+        arm64 | aarch64)
+          mach=arm64
+          ;;
+        *)
+          fail "Unsupported machine: $mach"
+          ;;
+      esac
+      ;;
+    *)
+      fail "Unsupported system: $sys"
+      ;;
+  esac
+  url="$GH_REPO/releases/download/v$version/${TOOL_NAME}_${version}_${sys}_${mach}.tar.gz"
 
   echo "* Downloading $TOOL_NAME release $version..."
   curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
